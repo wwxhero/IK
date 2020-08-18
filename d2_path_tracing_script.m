@@ -13,14 +13,14 @@ addBody(robot, body, 'base');
 
 body = rigidBody('link2');
 joint = rigidBodyJoint('joint2','revolute');
-setFixedTransform(joint, trvec2tform([L1,0,0]));
+setFixedTransform(joint, trvec2tform([L1, 0, 0]));
 joint.JointAxis = [0 0 1];
 body.Joint = joint;
 addBody(robot, body, 'link1');
 
 body = rigidBody('tool');
 joint = rigidBodyJoint('fix1','fixed');
-setFixedTransform(joint, trvec2tform([L2, 0, 0]));
+setFixedTransform(joint, trvec2tform([L2, 0,  0]));
 body.Joint = joint;
 addBody(robot, body, 'link2');
 
@@ -33,7 +33,7 @@ radius = 0.15;
 theta = t*(2*pi/t(end));
 points = center + radius*[cos(theta) sin(theta) zeros(size(theta))];
 
-q0 = homeConfiguration(robot);
+q0 = homeConfiguration(robot);      %?
 ndof = length(q0);
 qs = zeros(count, ndof);
 
