@@ -124,12 +124,24 @@ for i_target = 1 : n_targets
 		axangle = [v_r(1), v_r(2), v_r(3), theta(i_joint)];
 		delta_m = rotm2tform(axang2rotm(axangle));
 		local2world = local2world * local2parent0(:, : , i_joint) * delta_m;
+		p(:, i_joint) = local2world(1:3, 4);
 	end
 	local2world = local2world * local2parent0(:, :, ndof + 1);
 	targets_prime = local2world(1:3, 4);
-	e = norm(targets(i_target, :)' - targets_prime);
+	e_target = norm(targets(i_target, :)' - targets_prime);
+	assert(e_target < epsilon);
 
-	assert(e < epsilon);
+	p(:, ndof + 1) = local2world(1:3, 4);
+	j = jac(:, :, i_target);
+	j_prime = zeros(6, ndof);
+	for i_joint = 1 : ndof
+		j_prime(1:3, i_joint) = v_r;
+		j2e = p(:, ndof + 1) - p(:, i_joint);
+		j_prime(4:6, i_joint) = cross(v_r, j2e);
+	end
+	e_jac = j-j_prime;
+	max_e_jac = max(max(e_jac, [], 1));
+	assert(max_e_jac < epsilon);
 end
 
 
