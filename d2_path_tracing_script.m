@@ -47,7 +47,22 @@ qs = zeros(count, ndof);
 
 
 start_0 = tic;
-ik = inverseKinematics('RigidBodyTree', robot, 'SolverAlgorithm', 'LevenbergMarquardt');
+
+params.MaxIterations = 1500;
+params.MaxTime = 10;
+params.GradientTolerance = 5.0000e-09;
+params.SolutionTolerance = 1.0000e-06;
+params.EnforceJointLimits = 1;
+params.AllowRandomRestart = 1;
+params.StepTolerance = 1.0000e-12;
+params.ErrorChangeTolerance = 1.0000e-12;
+params.DampingBias = 0.0025;
+params.UseErrorDamping = 1;
+ik = inverseKinematics('RigidBodyTree', robot ...
+                    , 'SolverAlgorithm', 'LevenbergMarquardt' ...
+                    , 'SolverParameters', params...
+                    , 'UseTimer', false );
+
 weights = [0, 0, 0, 1, 1, 0];       %?
 endEffector = 'tool';
 endEffector_confs = zeros(4, 4, count);
