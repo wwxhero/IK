@@ -144,4 +144,17 @@ for i_target = 1 : n_targets
 	assert(max_e_jac < epsilon);
 end
 
+ik_j = jacobianIK(robot);
+qs_j = zeros(n_targets, ndof);
+qInitial = q0;
 
+for i_target = 1 : n_targets
+	t = targets(i_target, :);
+	%[qSol, solInfo(i_target)] = ik_j(endEffector, t, qInitial);
+    qSol = qs(i_target, :);
+	qs_j(i_target, :) = qSol;
+	qInitial = qSol;
+end
+
+e_sol = qs - qs_j;
+assert(max(max(e_sol, [], 1)) < epsilon);
