@@ -26,14 +26,42 @@ classdef(StrictDefaults) jacobianIK < matlab.System & ...
         end
     end
     methods (Access = protected)
-        function [QSol, solutionInfo] = stepImpl(obj, endEffectorName, tform, initialGuess)
+        function [theta, solutionInfo] = stepImpl(obj, name_eef, tform_t, theta_0)
             %stepImpl Solve IK
-            fprintf('stepImpl\n');
-            %body = getBody(obj, endEffectorName);
-            QSol= zeros(1, obj.bodyTree.NumBodies-1);
-            solutionInfo.Iterations = 10;
+            d2r = pi/180;
+            max_delta_norm_theta = 20 * d2r;
+            epsilon = 0.01;
+            theta_k = theta_0;
+
+            tform_eef = getTransform(obj.bodyTree, theta_k, name_eef);
+            p_t(1:3) = tform_t(1:3, 4);
+            p_eef(1:3) = tform_eef(1:3, 4);
+            e(1:3, 1) = 0;
+            e(4:6, 1) = p_t - p_eef;
+            %fprintf('stepImpl: [%f %f %f]\n', e(4, 1), e(5, 1), e(6, 1));
+
+            lambd = 1;
+            n_it = 0;
+            while (norm(e) > epsilon)
+                jak = geometricJacobian(obj.bodyTree, theta_k, name_eef);
+                %jak_inv = jak'*inv(jak*jak' + lambd * lambd * eye(6,6));
+                jak_inv = jak'/(jak*jak' + lambd * lambd * eye(6,6));
+                abs_e = abs(e);
+                beta_e = max_delta_norm_theta/(max(max_delta_norm_theta, max(abs_e)));
+                delta_e = beta_e * e;
+                delta_theta = jak_inv * delta_e;
+                theta_k = theta_k + delta_theta;
+                tform_eef = getTransform(obj.bodyTree, theta_k, name_eef);
+                p_t(1:3) = tform_t(1:3, 4);
+                p_eef(1:3) = tform_eef(1:3, 4);
+                e(1:3, 1) = 0;
+                e(4:6, 1) = p_t - p_eef;
+                n_it = n_it + 1;
+            end
+            theta = theta_k;
+            solutionInfo.Iterations = n_it;
             solutionInfo.NumRandomRestarts = 0;
-            solutionInfo.PoseErrorNorm = 0.00001;
+            solutionInfo.PoseErrorNorm = norm(e);
             solutionInfo.ExitFlag = 1;
             solutionInfo.Status = 'success';
         end
