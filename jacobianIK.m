@@ -1,7 +1,7 @@
 classdef(StrictDefaults) jacobianIK < matlab.System & ...
 							robotics.manip.internal.InternalAccess
 	properties
-		m_initialized = false;
+		bodyTree
 	end
 	methods
         function obj = jacobianIK(varargin)
@@ -21,9 +21,21 @@ classdef(StrictDefaults) jacobianIK < matlab.System & ...
             %                      that does not call platform-specific
             %                      time functions.
             %                      Values: true (default) | false
-            obj.m_initialized = true;
-
-
+            assert(isa (varargin{1}, 'rigidBodyTree'));
+            obj.bodyTree = copy(varargin{1});
+        end
+    end
+    methods (Access = protected)
+        function [QSol, solutionInfo] = stepImpl(obj, endEffectorName, tform, initialGuess)
+            %stepImpl Solve IK
+            fprintf('stepImpl\n');
+            %body = getBody(obj, endEffectorName);
+            QSol= zeros(1, obj.bodyTree.NumBodies-1);
+            solutionInfo.Iterations = 10;
+            solutionInfo.NumRandomRestarts = 0;
+            solutionInfo.PoseErrorNorm = 0.00001;
+            solutionInfo.ExitFlag = 1;
+            solutionInfo.Status = 'success';
         end
     end
 end

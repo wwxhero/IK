@@ -111,9 +111,9 @@ writetable(struct2table(solInfo), 'ik_solutions_info.txt');
 
 jac = zeros(6, ndof, n_targets);
 v_r = [0 0 1];
-local2parent0(:,:, 1) = m0_1;
-local2parent0(:,:, 2) = m0_2;
-local2parent0(:,:, 3) = m0_3;
+local2parent0(:, :, 1) = m0_1;
+local2parent0(:, :, 2) = m0_2;
+local2parent0(:, :, 3) = m0_3;
 epsilon = 0.0001
 for i_target = 1 : n_targets
 	theta = qs(i_target, :);
@@ -150,8 +150,8 @@ qInitial = q0;
 
 for i_target = 1 : n_targets
 	t = targets(i_target, :);
-	%[qSol, solInfo(i_target)] = ik_j(endEffector, t, qInitial);
-    qSol = qs(i_target, :);
+	[qSol, solInfo_prime(i_target)] = ik_j(endEffector, t, qInitial);
+	qSol = qs(i_target, :);
 	qs_j(i_target, :) = qSol;
 	qInitial = qSol;
 end
