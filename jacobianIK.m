@@ -65,6 +65,9 @@ classdef(StrictDefaults) jacobianIK < matlab.System & ...
             solutionInfo.PoseErrorNorm = norm_e;
             solutionInfo.ExitFlag = 1;
             solutionInfo.Status = 'success';
+            solutionInfo.theta = theta_0;
+            solutionInfo.target = p_t;
+            solutionInfo.theta_prime = theta;
         end
     end
 end
