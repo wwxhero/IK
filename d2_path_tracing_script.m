@@ -87,24 +87,8 @@ for i = 1:n_targets
 	qInitial = qSol;
 end
 elapsedTime_1 = toc(start_1);
-% figure
 
-% show(robot,qs(1,:)');				%?
-% %show(robot,q0);               %?
-% view(2)								%?
-% ax = gca;							%?
-% ax.Projection = 'orthographic';		%?
-% hold on
-% plot(targets(:,1),targets(:,2),'k')
-% axis([-0.1 0.7 -0.3 0.5])
-
-% framesPerSecond = 15;
-% r = rateControl(framesPerSecond);
-% for i = 1:n_targets
-%    show(robot,qs(i,:)','PreservePlot',false);
-%    drawnow
-%    waitfor(r);
-% end
+animateFIK(robot, qs, targets, solInfo);
 
 writematrix(qs, 'ik_solutions.csv');
 writetable(struct2table(solInfo), 'ik_solutions_info.txt');
@@ -159,30 +143,7 @@ e_sol = qs - qs_j;
 %assert(max(max(e_sol, [], 1)) < epsilon);
 fprintf('error:%f', max(max(e_sol, [], 1)));
 
-% figure
-
-% show(robot,qs_j(1,:)');				%?
-% %show(robot,q0);               %?
-% view(2)								%?
-% ax = gca;							%?
-% ax.Projection = 'orthographic';		%?
-% hold on
-% plot(targets(:,1),targets(:,2),'k')
-% axis([-0.1 0.7 -0.3 0.5])
-
-% framesPerSecond = 15;
-% r = rateControl(framesPerSecond);
-% for i = 1:n_targets
-%    show(robot,qs_j(i,:)','PreservePlot',false);
-%    drawnow
-%    s_info = solInfo_prime(i);
-%    str_solinfo = sprintf('#it = %d, err = %6.4f', s_info.Iterations, s_info.PoseErrorNorm);
-%    title(str_solinfo);
-%    waitfor(r);
-% end
-
-
-
+animateFIK(robot, qs_j, targets, solInfo_prime);
 
 
 sol_file_name = sprintf('ik_solutions_j_epsilon=%d_10000', epsilon*10000);
