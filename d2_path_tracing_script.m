@@ -98,13 +98,13 @@ hold on
 plot(targets(:,1),targets(:,2),'k')
 axis([-0.1 0.7 -0.3 0.5])
 
-%framesPerSecond = 15;
-%r = rateControl(framesPerSecond);
-%for i = 1:n_targets
-%    show(robot,qs(i,:)','PreservePlot',false);
-%    drawnow
-%    waitfor(r);
-%end
+framesPerSecond = 15;
+r = rateControl(framesPerSecond);
+for i = 1:n_targets
+   show(robot,qs(i,:)','PreservePlot',false);
+   drawnow
+   waitfor(r);
+end
 
 writematrix(qs, 'ik_solutions.csv');
 writetable(struct2table(solInfo), 'ik_solutions_info.txt');
@@ -114,7 +114,7 @@ v_r = [0 0 1];
 local2parent0(:, :, 1) = m0_1;
 local2parent0(:, :, 2) = m0_2;
 local2parent0(:, :, 3) = m0_3;
-epsilon = 0.0001
+epsilon = 0.005;
 for i_target = 1 : n_targets
 	theta = qs(i_target, :);
 	jac(:, :, i_target) = geometricJacobian(robot, theta', endEffector);
@@ -150,7 +150,7 @@ qInitial = q0;
 
 for i_target = 1 : n_targets
 	t = targets(i_target, :);
-	[qSol, solInfo_prime(i_target)] = ik_j(endEffector, trvec2tform(t), qInitial);
+	[qSol, solInfo_prime(i_target)] = ik_j(endEffector, trvec2tform(t), qInitial, epsilon);
 	qs_j(i_target, :) = qSol;
 	qInitial = qSol;
 end
@@ -159,5 +159,33 @@ e_sol = qs - qs_j;
 %assert(max(max(e_sol, [], 1)) < epsilon);
 fprintf('error:%f', max(max(e_sol, [], 1)));
 
-writematrix(qs_j, 'ik_solutions_j.csv');
+figure
+
+show(robot,qs_j(1,:)');				%?
+%show(robot,q0);               %?
+view(2)								%?
+ax = gca;							%?
+ax.Projection = 'orthographic';		%?
+hold on
+plot(targets(:,1),targets(:,2),'k')
+axis([-0.1 0.7 -0.3 0.5])
+
+framesPerSecond = 15;
+r = rateControl(framesPerSecond);
+for i = 1:n_targets
+   show(robot,qs_j(i,:)','PreservePlot',false);
+   drawnow
+   s_info = solInfo_prime(i);
+   str_solinfo = sprintf('#it = %d, err = %6.4f', s_info.Iterations, s_info.PoseErrorNorm);
+   title(str_solinfo);
+   waitfor(r);
+end
+
+
+
+
+
+solInfo_file_name = sprintf('ik_solutions_j_epsilon=%d_10000', epsilon*10000);
+%writematrix(qs_j, 'ik_solutions_j.csv');
+writematrix(qs_j, solInfo_file_name);
 writetable(struct2table(solInfo_prime), 'ik_solutions_info_j.txt');
