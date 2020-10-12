@@ -26,11 +26,19 @@ classdef(StrictDefaults) jacobianIK < matlab.System & ...
         end
     end
     methods (Access = protected)
-        function [theta, solutionInfo] = stepImpl(obj, name_eef, tform_t, theta_0, epsilon)
+        function [theta, solutionInfo, Theta, Err] = stepImpl(obj, name_eef, tform_t, theta_0, epsilon, N)
             %stepImpl Solve IK
             d2r = pi/180;
             max_delta_norm_theta = 20 * d2r;
             theta_k = theta_0;
+
+            if ~exist('N', 'var')
+                N = 500;
+            end
+
+            [n_theta, ~] = size(theta_0);
+            Theta = zeros(N, n_theta);
+            Err = zeros(N, n_theta);
 
             tform_eef = getTransform(obj.bodyTree, theta_k, name_eef);
             p_t(1:3) = tform_t(1:3, 4);
@@ -40,9 +48,10 @@ classdef(StrictDefaults) jacobianIK < matlab.System & ...
             norm_e = norm(e);
             %fprintf('stepImpl: [%f %f %f]\n', e(4, 1), e(5, 1), e(6, 1));
 
-            lambd = 1;
+            lambd = 0.1;
             n_it = 0;
-            while (norm_e > epsilon)
+            while (norm_e > epsilon ...
+                    & n_it < N)
                 jak = geometricJacobian(obj.bodyTree, theta_k, name_eef);
                 %jak_inv = jak'*inv(jak*jak' + lambd * lambd * eye(6,6));
                 jak_inv = jak'/(jak*jak' + lambd * lambd * eye(6,6));
@@ -58,6 +67,8 @@ classdef(StrictDefaults) jacobianIK < matlab.System & ...
                 e(4:6, 1) = p_t - p_eef;
                 norm_e = norm(e);
                 n_it = n_it + 1;
+                Theta(n_it, :) = theta_k;
+                Err(n_it, :) = norm_e;
             end
             theta = theta_k;
             solutionInfo.Iterations = n_it;

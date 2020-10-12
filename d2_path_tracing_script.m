@@ -35,7 +35,7 @@ addBody(robot, body_3, 'link2');
 
 showdetails(robot)
 
-t = (0:0.02:10)';                    %Time
+t = (0:0.2:10)';                    %Time
 n_targets = length(t);
 center = [0.3 0.1 0];
 radius = 0.15;
@@ -88,7 +88,7 @@ for i = 1:n_targets
 end
 elapsedTime_1 = toc(start_1);
 
-animateFIK(robot, qs, targets, solInfo);
+%animateFIK(robot, qs, targets, solInfo);
 
 writematrix(qs, 'ik_solutions.csv');
 writetable(struct2table(solInfo), 'ik_solutions_info.txt');
@@ -134,7 +134,7 @@ qInitial = q0;
 
 for i_target = 1 : n_targets
 	t = targets(i_target, :);
-	[qSol, solInfo_prime(i_target)] = ik_j(endEffector, trvec2tform(t), qInitial, epsilon);
+	[qSol, solInfo_prime(i_target)] = ik_j(endEffector, trvec2tform(t), qInitial, epsilon, []);
 	qs_j(i_target, :) = qSol;
 	qInitial = qSol;
 end
@@ -143,7 +143,7 @@ e_sol = qs - qs_j;
 %assert(max(max(e_sol, [], 1)) < epsilon);
 fprintf('error:%f', max(max(e_sol, [], 1)));
 
-animateFIK(robot, qs_j, targets, solInfo_prime);
+%animateFIK(robot, qs_j, targets, solInfo_prime);
 
 
 sol_file_name = sprintf('ik_solutions_j_epsilon=%d_10000', epsilon*10000);
@@ -151,3 +151,58 @@ solInfo_file_name = sprintf('ik_solutions_info_j_epsilon=%d_10000', epsilon*1000
 %writematrix(qs_j, 'ik_solutions_j.csv');
 writematrix(qs_j, sol_file_name);
 writetable(struct2table(solInfo_prime), solInfo_file_name);
+
+[~, n_theta] = size(qs_j);
+
+case_inspect.theta_0 = [1.703935634	-1.007373981; ...
+						1.802791827	-0.991014765; ...
+						1.591436203	-1.00835599; ...
+						0	0; ...
+						1.881101108	-0.960347638 ...
+						];
+case_inspect.targets = [0.160533527	0.044781317	0; ...
+						0.154712526	0.062696517	0; ...
+						0.168553998	0.027736949	0; ...
+						0.45	0.1	0; ...
+						0.151182795	0.081200015	0 ...
+						];
+case_inspect.n_iter = [114; ...
+						110; ...
+						109; ...
+						105; ...
+						98 ...
+						];
+[n_case, ~] = size(case_inspect.theta_0);
+
+for i_case = 1 : n_case
+	t = case_inspect.targets(i_case, :);
+	theta_0 = case_inspect.theta_0(i_case, :)';
+	n_iter = case_inspect.n_iter(i_case);
+	abs_delta = zeros(1, n_iter);
+	Idx_iter = 1:1:n_iter;
+	[~, ~, theta_k, err_k] = ik_j(endEffector, trvec2tform(t), theta_0, epsilon, n_iter);
+	for i_iter = 2 : n_iter
+		delta_theta = theta_k(i_iter, :) - theta_k(i_iter - 1, :);
+		abs_delta(i_iter) = norm(delta_theta);
+	end
+	abs_delta(1) = abs_delta(2);
+	figure
+	n_row_plot = 3;
+	subplot(n_row_plot, 1, 1);
+	plot(theta_k(:, 1)', theta_k(:, 2)', 'r*');
+	title('Iterative Solutions');
+	xlabel('\theta_1');
+	ylabel('\theta_2');
+
+	subplot(n_row_plot, 1, 2);
+	plot(Idx_iter, abs_delta);
+    title('Step Distance');
+    xlabel('# of interation');
+    ylabel('distance');
+
+    subplot(n_row_plot, 1, 3);
+    plot(Idx_iter, err_k);
+    title('Iteration vs Error');
+    xlabel('# of interation');
+    ylabel('Error');
+end
