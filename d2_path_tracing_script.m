@@ -174,31 +174,8 @@ for i_case = 1 : n_case
 	theta_0 = case_inspect.theta_0(i_case, :)';
 
 	[~, sInfo, theta_k, err_k] = ik_j(endEffector, trvec2tform(t), theta_0, epsilon, 1000);
-	n_iter = sInfo.Iterations;
-	abs_delta = zeros(1, n_iter);
-	Idx_iter = 1:1:n_iter;
-	for i_iter = 2 : n_iter
-		delta_theta = theta_k(i_iter, :) - theta_k(i_iter - 1, :);
-		abs_delta(i_iter) = norm(delta_theta);
-	end
-	abs_delta(1) = abs_delta(2);
-	figure
-	n_row_plot = 3;
-	subplot(n_row_plot, 1, 1);
-	plot(theta_k(1:n_iter, 1)', theta_k(1:n_iter, 2)', 'r*');
-	title('Iterative Solutions');
-	xlabel('\theta_1');
-	ylabel('\theta_2');
 
-	subplot(n_row_plot, 1, 2);
-	plot(Idx_iter(2:n_iter), abs_delta(2:n_iter));
-    title('Step Distance');
-    xlabel('# of interation');
-    ylabel('distance');
-
-    subplot(n_row_plot, 1, 3);
-    plot(Idx_iter, err_k(1:n_iter));
-    title('Iteration vs Error');
-    xlabel('# of interation');
-    ylabel('Error');
+	Theta_2 = theta_k(1:sInfo.Iterations, :);
+	Err_1 = err_k(1:sInfo.Iterations);
+	plotIKAlgorPerf(Theta_2, Err_1);
 end
