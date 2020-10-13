@@ -166,21 +166,17 @@ case_inspect.targets = [0.160533527	0.044781317	0; ...
 						0.45	0.1	0; ...
 						0.151182795	0.081200015	0 ...
 						];
-case_inspect.n_iter = [114; ...
-						110; ...
-						109; ...
-						105; ...
-						98 ...
-						];
+
 [n_case, ~] = size(case_inspect.theta_0);
 
 for i_case = 1 : n_case
 	t = case_inspect.targets(i_case, :);
 	theta_0 = case_inspect.theta_0(i_case, :)';
-	n_iter = case_inspect.n_iter(i_case);
+
+	[~, sInfo, theta_k, err_k] = ik_j(endEffector, trvec2tform(t), theta_0, epsilon, 1000);
+	n_iter = sInfo.Iterations;
 	abs_delta = zeros(1, n_iter);
 	Idx_iter = 1:1:n_iter;
-	[~, ~, theta_k, err_k] = ik_j(endEffector, trvec2tform(t), theta_0, epsilon, n_iter);
 	for i_iter = 2 : n_iter
 		delta_theta = theta_k(i_iter, :) - theta_k(i_iter - 1, :);
 		abs_delta(i_iter) = norm(delta_theta);
@@ -189,19 +185,19 @@ for i_case = 1 : n_case
 	figure
 	n_row_plot = 3;
 	subplot(n_row_plot, 1, 1);
-	plot(theta_k(:, 1)', theta_k(:, 2)', 'r*');
+	plot(theta_k(1:n_iter, 1)', theta_k(1:n_iter, 2)', 'r*');
 	title('Iterative Solutions');
 	xlabel('\theta_1');
 	ylabel('\theta_2');
 
 	subplot(n_row_plot, 1, 2);
-	plot(Idx_iter, abs_delta);
+	plot(Idx_iter(2:n_iter), abs_delta(2:n_iter));
     title('Step Distance');
     xlabel('# of interation');
     ylabel('distance');
 
     subplot(n_row_plot, 1, 3);
-    plot(Idx_iter, err_k);
+    plot(Idx_iter, err_k(1:n_iter));
     title('Iteration vs Error');
     xlabel('# of interation');
     ylabel('Error');
