@@ -32,9 +32,7 @@ classdef(StrictDefaults) jacobianIK < matlab.System & ...
             max_delta_norm_theta = 20 * d2r;
             theta_k = theta_0;
 
-            if ~exist('N', 'var')
-                N = 500;
-            end
+
 
             [n_theta, ~] = size(theta_0);
             Theta = zeros(N, n_theta);
@@ -48,13 +46,13 @@ classdef(StrictDefaults) jacobianIK < matlab.System & ...
             norm_e = norm(e);
             %fprintf('stepImpl: [%f %f %f]\n', e(4, 1), e(5, 1), e(6, 1));
 
-            lambd = 0.1;
+            lambd_sqr = 0.21544347; %lambd_sqr ^ 6 == 0.0001 (epsilon for determinant)
             n_it = 0;
             while (norm_e > epsilon ...
                     & n_it < N)
                 jak = geometricJacobian(obj.bodyTree, theta_k, name_eef);
                 %jak_inv = jak'*inv(jak*jak' + lambd * lambd * eye(6,6));
-                jak_inv = jak'/(jak*jak' + lambd * lambd * eye(6,6));
+                jak_inv = jak'/(jak*jak' + lambd_sqr * eye(6,6));
                 abs_e = abs(e);
                 beta_e = max_delta_norm_theta/(max(max_delta_norm_theta, max(abs_e)));
                 delta_e = beta_e * e;

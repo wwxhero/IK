@@ -98,7 +98,7 @@ v_r = [0 0 1];
 local2parent0(:, :, 1) = m0_1;
 local2parent0(:, :, 2) = m0_2;
 local2parent0(:, :, 3) = m0_3;
-epsilon = 0.005;
+epsilon = 0.01;
 for i_target = 1 : n_targets
 	theta = qs(i_target, :);
 	jac(:, :, i_target) = geometricJacobian(robot, theta', endEffector);
@@ -134,7 +134,7 @@ qInitial = q0;
 
 for i_target = 1 : n_targets
 	t = targets(i_target, :);
-	[qSol, solInfo_prime(i_target)] = ik_j(endEffector, trvec2tform(t), qInitial, epsilon, []);
+	[qSol, solInfo_prime(i_target), ~, ~] = ik_j(endEffector, trvec2tform(t), qInitial, epsilon, 500);
 	qs_j(i_target, :) = qSol;
 	qInitial = qSol;
 end

@@ -8,7 +8,7 @@ function animateFIK(rigTree, theta, targets, solInfo)
 	hold on
 	plot(targets(:,1),targets(:,2),'k')
 	axis([-0.1 0.7 -0.3 0.5])
-	framesPerSecond = 15;
+	framesPerSecond = 5;
 	r = rateControl(framesPerSecond);
 	for i = 1:n_targets
 	   show(rigTree,theta(i,:)','PreservePlot',false);
