@@ -26,7 +26,7 @@ classdef(StrictDefaults) jacobianIK < matlab.System & ...
         end
     end
     methods (Access = protected)
-        function [theta, solutionInfo, Theta, Err] = stepImpl(obj, name_eef, tform_t, theta_0, epsilon, N)
+        function [theta, solutionInfo, Theta, Err] = stepImpl(obj, name_eef, tform_t, theta_0, epsilon, N, lambd_sqr)
             %stepImpl Solve IK
             d2r = pi/180;
             max_delta_norm_theta = 20 * d2r;
@@ -46,7 +46,7 @@ classdef(StrictDefaults) jacobianIK < matlab.System & ...
             norm_e = norm(e);
             %fprintf('stepImpl: [%f %f %f]\n', e(4, 1), e(5, 1), e(6, 1));
 
-            lambd_sqr = 0.21544347; %lambd_sqr ^ 6 == 0.0001 (epsilon for determinant)
+            %lambd_sqr ^ 6 == 0.0001 (epsilon for determinant)
             n_it = 0;
             while (norm_e > epsilon ...
                     & n_it < N)

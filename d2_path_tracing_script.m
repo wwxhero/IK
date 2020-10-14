@@ -134,7 +134,7 @@ qInitial = q0;
 
 for i_target = 1 : n_targets
 	t = targets(i_target, :);
-	[qSol, solInfo_prime(i_target), ~, ~] = ik_j(endEffector, trvec2tform(t), qInitial, epsilon, 500);
+	[qSol, solInfo_prime(i_target), ~, ~] = ik_j(endEffector, trvec2tform(t), qInitial, epsilon, 500, 1);
 	qs_j(i_target, :) = qSol;
 	qInitial = qSol;
 end
@@ -172,10 +172,14 @@ case_inspect.targets = [0.160533527	0.044781317	0; ...
 for i_case = 1 : n_case
 	t = case_inspect.targets(i_case, :);
 	theta_0 = case_inspect.theta_0(i_case, :)';
+	lambda_sqr = [1, 0.1];
+	[~, sInfo, theta_k, err_k] = ik_j(endEffector, trvec2tform(t), theta_0, epsilon, 1000, lambda_sqr(1));
+	[~, sInfo2, theta_k2, err_k2] = ik_j(endEffector, trvec2tform(t), theta_0, epsilon, 1000, lambda_sqr(2));
 
-	[~, sInfo, theta_k, err_k] = ik_j(endEffector, trvec2tform(t), theta_0, epsilon, 1000);
+	Theta = theta_k(1:sInfo.Iterations, :);
+	Err = err_k(1:sInfo.Iterations);
+	Theta_prime = theta_k2(1:sInfo2.Iterations, :);
+	Err_prime = err_k2(1:sInfo2.Iterations);
+	plotIKAlgorPerf(Theta, Err, Theta_prime, Err_prime);
 
-	Theta_2 = theta_k(1:sInfo.Iterations, :);
-	Err_1 = err_k(1:sInfo.Iterations);
-	plotIKAlgorPerf(Theta_2, Err_1);
 end
