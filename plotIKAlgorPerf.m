@@ -1,5 +1,5 @@
-function plotIKAlgorPerf(Theta_2, Err_1 ...
-						, Theta_2_prime, Err_1_prime)
+function plotIKAlgorPerf(Theta_2, Err_1, lambda ...
+						, Theta_2_prime, Err_1_prime, lambda_prime)
 	[n_iter, ~] = size(Theta_2);
 	[n_iter_prime, ~] = size(Theta_2_prime);
 	abs_delta = zeros(1, n_iter);
@@ -27,6 +27,9 @@ function plotIKAlgorPerf(Theta_2, Err_1 ...
 	title('Iterative Solutions');
 	xlabel('\theta_1');
 	ylabel('\theta_2');
+	legend(sprintf('\\lambda=%4.3f', lambda) ...
+		 , sprintf('\\lambda=%4.3f', lambda_prime));
+
 
 	subplot(n_row_plot, 1, 2);
 	plot(Idx_iter(2:n_iter), abs_delta(2:n_iter), 'r' ...
@@ -34,6 +37,8 @@ function plotIKAlgorPerf(Theta_2, Err_1 ...
 	title('Step Distance');
 	xlabel('# of interation');
 	ylabel('distance');
+	legend(sprintf('\\lambda=%4.3f', lambda) ...
+		 , sprintf('\\lambda=%4.3f', lambda_prime));
 
 	subplot(n_row_plot, 1, 3);
 	plot(Idx_iter, Err_1(1:n_iter), 'r' ...
@@ -41,4 +46,6 @@ function plotIKAlgorPerf(Theta_2, Err_1 ...
 	title('Iteration vs Error');
 	xlabel('# of interation');
 	ylabel('Error');
+	legend(sprintf('\\lambda=%4.3f', lambda) ...
+		 , sprintf('\\lambda=%4.3f', lambda_prime));
 end

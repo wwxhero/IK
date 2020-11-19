@@ -143,7 +143,7 @@ e_sol = qs - qs_j;
 %assert(max(max(e_sol, [], 1)) < epsilon);
 fprintf('error:%f', max(max(e_sol, [], 1)));
 
-%animateFIK(robot, qs_j, targets, solInfo_prime);
+animateFIK(robot, qs_j, targets, solInfo_prime);
 
 
 sol_file_name = sprintf('ik_solutions_j_epsilon=%d_10000', epsilon*10000);
@@ -180,6 +180,6 @@ for i_case = 1 : n_case
 	Err = err_k(1:sInfo.Iterations);
 	Theta_prime = theta_k2(1:sInfo2.Iterations, :);
 	Err_prime = err_k2(1:sInfo2.Iterations);
-	plotIKAlgorPerf(Theta, Err, Theta_prime, Err_prime);
-
+	plotIKAlgorPerf(Theta, Err, lambda_sqr(1) ...
+			, Theta_prime, Err_prime, lambda_sqr(2));
 end
