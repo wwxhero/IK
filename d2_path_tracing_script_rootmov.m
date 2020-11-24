@@ -21,6 +21,24 @@ robot = rigidBodyTree('DataFormat','column','MaxNumBodies',3);
 % Specify arm lengths for the robot arm.
 L1 = 0.3;
 L2 = 0.3;
+
+%%
+% Add |'entity_x'| body with |'joint_x'| joint.
+body = rigidBody('entity_x');
+joint = rigidBodyJoint('joint_x', 'prismatic');
+setFixedTransform(joint,trvec2tform([0 0 0]));
+joint.JointAxis = [1 0 0];
+body.Joint = joint;
+addBody(robot, body, 'base');
+
+% Add |'entity_y'| body with |'joint_y'| joint.
+body = rigidBody('entity_y');
+joint = rigidBodyJoint('joint_y', 'prismatic');
+setFixedTransform(joint,trvec2tform([0 0 0]));
+joint.JointAxis = [0 1 0];
+body.Joint = joint;
+addBody(robot, body, 'entity_x');
+
 %%
 % Add |'link1'| body with |'joint1'| joint.
 body = rigidBody('link1');
@@ -28,7 +46,7 @@ joint = rigidBodyJoint('joint1', 'revolute');
 setFixedTransform(joint,trvec2tform([0 0 0]));
 joint.JointAxis = [0 0 1];
 body.Joint = joint;
-addBody(robot, body, 'base');
+addBody(robot, body, 'entity_y');
 %%
 % Add |'link2'| body with |'joint2'| joint.
 body = rigidBody('link2');
@@ -77,7 +95,7 @@ qs = zeros(count, ndof);
 % specify a non-zero weight for the fourth and fifth elements of the
 % |weight| vector. All other elements are set to zero.
 ik = inverseKinematics('RigidBodyTree', robot);
-weights = [0, 0, 0, 1, 1, 0];
+weights = [1, 1, 1, 1, 1, 0];
 endEffector = 'tool';
 
 %%
@@ -90,7 +108,17 @@ for i = 1:count
     % Solve for the configuration satisfying the desired end effector
     % position
     point = points(i,:);
-    qSol = ik(endEffector,trvec2tform(point),weights,qInitial);
+    z_prime = [0; 0; 1];
+    x_prime = point - center;
+    x_prime = x_prime./norm(x_prime);
+    y_prime = cross(z_prime, x_prime);
+    ori_t = affine3d([x_prime(1), x_prime(2), x_prime(3), 0;...
+                    , y_prime(1), y_prime(2), y_prime(3), 0;...
+                    , z_prime(1), z_prime(2), z_prime(3), 0;...
+                    , point(1), point(2), point(3), 1]);
+
+    pose = ori_t.T';
+    qSol = ik(endEffector,pose,weights,qInitial);
     % Store the configuration
     qs(i,:) = qSol;
     % Start from prior solution
@@ -105,6 +133,18 @@ end
 % Show the robot in the first configuration of the trajectory. Adjust the
 % plot to show the 2-D plane that circle is drawn on. Plot the desired
 % trajectory.
+
+figure
+show(robot,q0);
+view(2)
+ax = gca;
+ax.Projection = 'orthographic';
+hold on
+plot(points(:,1),points(:,2),'k')
+axis([-0.7 0.7 -0.5 0.5])
+
+
+
 figure
 show(robot,qs(1,:)');
 view(2)
@@ -112,14 +152,16 @@ ax = gca;
 ax.Projection = 'orthographic';
 hold on
 plot(points(:,1),points(:,2),'k')
-axis([-0.1 0.7 -0.3 0.5])
+text(0, 0, 'origin');
+%axis([-0.1 0.7 -0.3 0.5])
+axis([-0.7 0.7 -0.5 0.5])
 
 %%
 % Set up a <docid:robotics_ref.mw_9b7bd9b2-cebc-4848-a38a-2eb93d51da03 Rate> object to display the robot
 % trajectory at a fixed rate of 15 frames per second. Show the robot in
 % each configuration from the inverse kinematic solver. Watch as the arm
 % traces the circular trajectory shown.
-framesPerSecond = 15;
+framesPerSecond = 0.1;
 r = rateControl(framesPerSecond);
 for i = 1:count
     show(robot,qs(i,:)','PreservePlot',false);
