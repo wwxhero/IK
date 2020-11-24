@@ -150,4 +150,20 @@ writematrix(qs, 'ik_solutions_rootmov.csv');
 writetable(struct2table(solInfo), 'ik_solutions_info_rootmov.txt');
 
 %%
+ik_j = jacobianIK(robot);
+qs_j = zeros(n_targets, ndof);
+qInitial = q0;
+
+for i_target = 1 : n_targets
+	t = targets(i_target, :);
+	[qSol, solInfo_prime(i_target), ~, ~] = ik_j(endEffector, trvec2tform(t), qInitial, epsilon, 500, 1);
+	qs_j(i_target, :) = qSol;
+	qInitial = qSol;
+end
+
+e_sol = qs - qs_j;
+%assert(max(max(e_sol, [], 1)) < epsilon);
+fprintf('error:%f', max(max(e_sol, [], 1)));
+
+animateFIK(robot, qs_j, targets, solInfo_prime);
 % Copyright 2012 The MathWorks, Inc.
