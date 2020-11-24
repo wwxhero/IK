@@ -73,11 +73,11 @@ showdetails(robot)
 % Define a circle to be traced over the course of 10 seconds. This circle
 % is in the _xy_ plane with a radius of 0.15.
 t = (0:0.2:10)'; % Time
-count = length(t);
+n_targets = length(t);
 center = [0.3 0.1 0];
 radius = 0.15;
 theta = t*(2*pi/t(end));
-points = center + radius*[cos(theta) sin(theta) zeros(size(theta))];
+targets = center + radius*[cos(theta) sin(theta) zeros(size(theta))];
 
 %% Inverse Kinematics Solution
 % Use an |inverseKinematics| object to find a solution of robotic
@@ -88,27 +88,46 @@ points = center + radius*[cos(theta) sin(theta) zeros(size(theta))];
 % Pre-allocate configuration solutions as a matrix |qs|.
 q0 = homeConfiguration(robot);
 ndof = length(q0);
-qs = zeros(count, ndof);
+qs = zeros(n_targets, ndof);
 %%
 % Create the inverse kinematics solver. Because the _xy_ Cartesian points are the
 % only important factors of the end-effector pose for this workflow,
 % specify a non-zero weight for the fourth and fifth elements of the
 % |weight| vector. All other elements are set to zero.
-ik = inverseKinematics('RigidBodyTree', robot);
+start_0 = tic;
+
+params.MaxIterations = 1500;
+params.MaxTime = 10;
+params.GradientTolerance = 5.0000e-09;
+params.SolutionTolerance = 1.0000e-06;
+params.EnforceJointLimits = 1;
+params.AllowRandomRestart = 1;
+params.StepTolerance = 1.0000e-12;
+params.ErrorChangeTolerance = 1.0000e-12;
+params.DampingBias = 0.0025;
+params.UseErrorDamping = 1;
+ik = inverseKinematics('RigidBodyTree', robot ...
+					, 'SolverAlgorithm', 'LevenbergMarquardt' ...
+					, 'SolverParameters', params...
+					, 'UseTimer', false );
+
+
 weights = [1, 1, 1, 1, 1, 0];
 endEffector = 'tool';
-
+endEffector_confs = zeros(4, 4, n_targets);
 %%
 % Loop through the trajectory of points to trace the circle. Call the |ik|
 % object for each point to generate the joint configuration that achieves
 % the end-effector position. Store the configurations to use later.
 
 qInitial = q0; % Use home configuration as the initial guess
-for i = 1:count
+elapsedTime_0 = toc(start_0);
+start_1 = tic;
+for i = 1:n_targets
     % Solve for the configuration satisfying the desired end effector
     % position
-    point = points(i,:);
-    z_prime = [0; 0; 1];
+	point = targets(i,:);
+    z_prime = [0 0 1];
     x_prime = point - center;
     x_prime = x_prime./norm(x_prime);
     y_prime = cross(z_prime, x_prime);
@@ -117,58 +136,18 @@ for i = 1:count
                     , z_prime(1), z_prime(2), z_prime(3), 0;...
                     , point(1), point(2), point(3), 1]);
 
-    pose = ori_t.T';
-    qSol = ik(endEffector,pose,weights,qInitial);
+    endEffector_confs(:, :, i) = ori_t.T';
+	[qSol, solInfo(i)] = ik(endEffector, endEffector_confs(:, :, i), weights, qInitial);
     % Store the configuration
     qs(i,:) = qSol;
     % Start from prior solution
     qInitial = qSol;
 end
+elapsedTime_1 = toc(start_1);
 
-%% Animate The Solution
-% Plot the robot for each frame of the solution using that specific robot
-% configuration. Also, plot the desired trajectory.
-
-%%
-% Show the robot in the first configuration of the trajectory. Adjust the
-% plot to show the 2-D plane that circle is drawn on. Plot the desired
-% trajectory.
-
-figure
-show(robot,q0);
-view(2)
-ax = gca;
-ax.Projection = 'orthographic';
-hold on
-plot(points(:,1),points(:,2),'k')
-axis([-0.7 0.7 -0.5 0.5])
-
-
-
-figure
-show(robot,qs(1,:)');
-view(2)
-ax = gca;
-ax.Projection = 'orthographic';
-hold on
-plot(points(:,1),points(:,2),'k')
-text(0, 0, 'origin');
-%axis([-0.1 0.7 -0.3 0.5])
-axis([-0.7 0.7 -0.5 0.5])
-
-%%
-% Set up a <docid:robotics_ref.mw_9b7bd9b2-cebc-4848-a38a-2eb93d51da03 Rate> object to display the robot
-% trajectory at a fixed rate of 15 frames per second. Show the robot in
-% each configuration from the inverse kinematic solver. Watch as the arm
-% traces the circular trajectory shown.
-framesPerSecond = 0.1;
-r = rateControl(framesPerSecond);
-for i = 1:count
-    show(robot,qs(i,:)','PreservePlot',false);
-    drawnow
-    waitfor(r);
-end
-
+animateFIK(robot, qs, targets, solInfo);
+writematrix(qs, 'ik_solutions_rootmov.csv');
+writetable(struct2table(solInfo), 'ik_solutions_info_rootmov.txt');
 
 %%
 % Copyright 2012 The MathWorks, Inc.
