@@ -155,8 +155,18 @@ qs_j = zeros(n_targets, ndof);
 qInitial = q0;
 
 for i_target = 1 : n_targets
-	t = targets(i_target, :);
-	[qSol, solInfo_prime(i_target), ~, ~] = ik_j(endEffector, trvec2tform(t), qInitial, epsilon, 500, 1);
+	point = targets(i_target, :);
+    z_prime = [0 0 1];
+    x_prime = point - center;
+    x_prime = x_prime./norm(x_prime);
+    y_prime = cross(z_prime, x_prime);
+    ori_t = affine3d([x_prime(1), x_prime(2), x_prime(3), 0;...
+                    , y_prime(1), y_prime(2), y_prime(3), 0;...
+                    , z_prime(1), z_prime(2), z_prime(3), 0;...
+                    , point(1), point(2), point(3), 1]);
+
+    endEffector_confs(:, :, i) = ori_t.T';
+	[qSol, solInfo_prime(i_target), ~, ~] = ik_j(endEffector, endEffector_confs(:, :, i), qInitial, epsilon, 500, 1);
 	qs_j(i_target, :) = qSol;
 	qInitial = qSol;
 end
