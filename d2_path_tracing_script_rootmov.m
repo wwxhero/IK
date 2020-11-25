@@ -153,7 +153,8 @@ writetable(struct2table(solInfo), 'ik_solutions_info_rootmov.txt');
 ik_j = jacobianIK(robot);
 qs_j = zeros(n_targets, ndof);
 qInitial = q0;
-
+epsilon_d = 0.01; %1 centimeter
+epsilon_r = 0.087; %5 degree
 for i_target = 1 : n_targets
 	point = targets(i_target, :);
     z_prime = [0 0 1];
@@ -166,7 +167,7 @@ for i_target = 1 : n_targets
                     , point(1), point(2), point(3), 1]);
 
     endEffector_confs(:, :, i) = ori_t.T';
-	[qSol, solInfo_prime(i_target), ~, ~] = ik_j(endEffector, endEffector_confs(:, :, i), qInitial, epsilon, 500, 1);
+	[qSol, solInfo_prime(i_target), ~, ~] = ik_j(endEffector, endEffector_confs(:, :, i), qInitial, epsilon_d, epsilon_r, 500, 1, weights);
 	qs_j(i_target, :) = qSol;
 	qInitial = qSol;
 end
