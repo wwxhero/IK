@@ -132,9 +132,13 @@ ik_j = jacobianIK(robot);
 qs_j = zeros(n_targets, ndof);
 qInitial = q0;
 
+epsilon_d = 0.01;
+%epsilon_r = 0.087; %5 degree
+epsilon_r = 2*pi;
+
 for i_target = 1 : n_targets
 	t = targets(i_target, :);
-	[qSol, solInfo_prime(i_target), ~, ~] = ik_j(endEffector, trvec2tform(t), qInitial, epsilon, 500, 1);
+	[qSol, solInfo_prime(i_target), ~, ~] = ik_j(endEffector, trvec2tform(t), qInitial, epsilon_d, epsilon_r, 500, 1, weights);
 	qs_j(i_target, :) = qSol;
 	qInitial = qSol;
 end
@@ -173,8 +177,8 @@ for i_case = 1 : n_case
 	t = case_inspect.targets(i_case, :);
 	theta_0 = case_inspect.theta_0(i_case, :)';
 	lambda_sqr = [1, 0.1];
-	[~, sInfo, theta_k, err_k] = ik_j(endEffector, trvec2tform(t), theta_0, epsilon, 1000, lambda_sqr(1));
-	[~, sInfo2, theta_k2, err_k2] = ik_j(endEffector, trvec2tform(t), theta_0, epsilon, 1000, lambda_sqr(2));
+	[~, sInfo, theta_k, err_k] = ik_j(endEffector, trvec2tform(t), theta_0, epsilon_d, epsilon_r, 1000, lambda_sqr(1), weights);
+	[~, sInfo2, theta_k2, err_k2] = ik_j(endEffector, trvec2tform(t), theta_0, epsilon_d, epsilon_r, 1000, lambda_sqr(2), weights);
 
 	Theta = theta_k(1:sInfo.Iterations, :);
 	Err = err_k(1:sInfo.Iterations);
