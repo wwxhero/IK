@@ -31,7 +31,7 @@ classdef(StrictDefaults) jacobianIK < matlab.System & ...
             d2r = pi/180;
             max_delta_norm_theta = 20 * d2r;
             theta_k = theta_0;
-
+            weights = [0.1 0.1 0.1 1 1 1];
 
 
             [n_theta, ~] = size(theta_0);
@@ -39,16 +39,23 @@ classdef(StrictDefaults) jacobianIK < matlab.System & ...
             Err = zeros(N, n_theta);
 
             tform_eef = getTransform(obj.bodyTree, theta_k, name_eef);
+            r_t = tform_t(1:3, 1:3);
             p_t(1:3) = tform_t(1:3, 4);
+            r_eef = tform_eef(1:3, 1:3);
             p_eef(1:3) = tform_eef(1:3, 4);
-            e(1:3, 1) = 0;
+            e_r_ua = rotm2axang(r_t * r_eef');
+            e(1:3, 1) = e_r_ua(4) * e_r_ua(1:3);
             e(4:6, 1) = p_t - p_eef;
+            e = e .* weights';
             norm_e = norm(e);
             %fprintf('stepImpl: [%f %f %f]\n', e(4, 1), e(5, 1), e(6, 1));
 
             %lambd_sqr ^ 6 == 0.0001 (epsilon for determinant)
             n_it = 0;
+            sigmove = true;
+            epsilon_sigmove = 0.1 * epsilon;
             while (norm_e > epsilon ...
+                    & sigmove ...
                     & n_it < N)
                 jak = geometricJacobian(obj.bodyTree, theta_k, name_eef);
                 %jak_inv = jak'*inv(jak*jak' + lambd * lambd * eye(6,6));
@@ -58,11 +65,15 @@ classdef(StrictDefaults) jacobianIK < matlab.System & ...
                 delta_e = beta_e * e;
                 delta_theta = jak_inv * delta_e;
                 theta_k = theta_k + delta_theta;
+                sigmove = (norm(delta_theta) > epsilon_sigmove);
                 tform_eef = getTransform(obj.bodyTree, theta_k, name_eef);
                 p_t(1:3) = tform_t(1:3, 4);
+	            r_eef = tform_eef(1:3, 1:3);
                 p_eef(1:3) = tform_eef(1:3, 4);
-                e(1:3, 1) = 0;
+	            e_r_ua = rotm2axang(r_t * r_eef');
+                e(1:3, 1) = e_r_ua(4) * e_r_ua(1:3);
                 e(4:6, 1) = p_t - p_eef;
+                e = e .* weights';
                 norm_e = norm(e);
                 n_it = n_it + 1;
                 Theta(n_it, :) = theta_k;
