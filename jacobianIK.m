@@ -31,7 +31,7 @@ classdef(StrictDefaults) jacobianIK < matlab.System & ...
             d2r = pi/180;
             max_delta_norm_theta = 20 * d2r;
             theta_k = theta_0;
-            weights = [0.1 0.1 0.1 1 1 1];
+            weights = [0 0 0 1 1 1];
 
 
             [n_theta, ~] = size(theta_0);
@@ -60,10 +60,9 @@ classdef(StrictDefaults) jacobianIK < matlab.System & ...
                 jak = geometricJacobian(obj.bodyTree, theta_k, name_eef);
                 %jak_inv = jak'*inv(jak*jak' + lambd * lambd * eye(6,6));
                 jak_inv = jak'/(jak*jak' + lambd_sqr * eye(6,6));
-                abs_e = abs(e);
-                beta_e = max_delta_norm_theta/(max(max_delta_norm_theta, max(abs_e)));
-                delta_e = beta_e * e;
-                delta_theta = jak_inv * delta_e;
+                delta_theta = jak_inv * e;
+                beta_theta = max_delta_norm_theta/(max(max_delta_norm_theta, max(abs(delta_theta))));
+                delta_theta = delta_theta * beta_theta;
                 theta_k = theta_k + delta_theta;
                 sigmove = (norm(delta_theta) > epsilon_sigmove);
                 tform_eef = getTransform(obj.bodyTree, theta_k, name_eef);
