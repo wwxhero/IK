@@ -26,7 +26,7 @@ classdef(StrictDefaults) jacobianIK < matlab.System & ...
         end
     end
     methods (Access = protected)
-        function [theta, solutionInfo, Theta, Err] = stepImpl(obj, name_eef, tform_t, theta_0, epsilon_p, epsilon_r, N, lambd_sqr, weights)
+        function [theta, solutionInfo, Theta, Err_r, Err_p] = stepImpl(obj, name_eef, tform_t, theta_0, epsilon_p, epsilon_r, N, lambd_sqr, weights)
             %stepImpl Solve IK
             d2r = pi/180;
             r2d = 180/pi;
@@ -38,7 +38,8 @@ classdef(StrictDefaults) jacobianIK < matlab.System & ...
 
             [n_theta, ~] = size(theta_0);
             Theta = zeros(N, n_theta);
-            Err = zeros(N, n_theta);
+            Err_p = zeros(N, n_theta);
+            Err_r = zeros(N, n_theta);
 
             tform_eef = getTransform(obj.bodyTree, theta_k, name_eef);
             r_t = tform_t(1:3, 1:3);
@@ -55,6 +56,9 @@ classdef(StrictDefaults) jacobianIK < matlab.System & ...
 
             %lambd_sqr ^ 6 == 0.0001 (epsilon for determinant)
             n_it = 0;
+            Theta(n_it+1, :) = theta_k;
+            Err_p(n_it+1, :) = norm_e_p;
+            Err_r(n_it+1, :) = norm_e_r;
             sigmove = true;
             while ((norm_e_p > epsilon_p || norm_e_r > epsilon_r) ...
                     & sigmove ...
@@ -77,8 +81,9 @@ classdef(StrictDefaults) jacobianIK < matlab.System & ...
                 norm_e_r = norm(e(1:3));
                 norm_e_p = norm(e(4:6));
                 n_it = n_it + 1;
-                Theta(n_it, :) = theta_k;
-                Err(n_it, :) = norm_e_p;
+                Theta(n_it+1, :) = theta_k;
+                Err_p(n_it+1, :) = norm_e_p;
+                Err_r(n_it+1, :) = norm_e_r;
             end
             theta = theta_k;
             solutionInfo.Iterations = n_it;

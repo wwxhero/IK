@@ -147,7 +147,7 @@ e_sol = qs - qs_j;
 %assert(max(max(e_sol, [], 1)) < epsilon);
 fprintf('error:%f', max(max(e_sol, [], 1)));
 
-animateFIK(robot, qs_j, targets, solInfo_prime);
+%animateFIK(robot, qs_j, targets, solInfo_prime);
 
 epsilon_d_d = 100;
 epsilon_d_n = round(epsilon_d_d * epsilon_d);
@@ -178,13 +178,13 @@ for i_case = 1 : n_case
 	t = case_inspect.targets(i_case, :);
 	theta_0 = case_inspect.theta_0(i_case, :)';
 	lambda_sqr = [1, 0.1];
-	[~, sInfo, theta_k, err_k] = ik_j(endEffector, trvec2tform(t), theta_0, epsilon_d, epsilon_r, 1000, lambda_sqr(1), weights);
-	[~, sInfo2, theta_k2, err_k2] = ik_j(endEffector, trvec2tform(t), theta_0, epsilon_d, epsilon_r, 1000, lambda_sqr(2), weights);
+	[~, sInfo, theta_k, ~, err_k] = ik_j(endEffector, trvec2tform(t), theta_0, epsilon_d, epsilon_r, 1000, lambda_sqr(1), weights);
+	[~, sInfo2, theta_k2, ~, err_k2] = ik_j(endEffector, trvec2tform(t), theta_0, epsilon_d, epsilon_r, 1000, lambda_sqr(2), weights);
 
 	Theta = theta_k(1:sInfo.Iterations, :);
 	Err = err_k(1:sInfo.Iterations);
 	Theta_prime = theta_k2(1:sInfo2.Iterations, :);
 	Err_prime = err_k2(1:sInfo2.Iterations);
 	plotIKAlgorPerf(Theta, Err, lambda_sqr(1) ...
-			, Theta_prime, Err_prime, lambda_sqr(2));
+	 		, Theta_prime, Err_prime, lambda_sqr(2));
 end
