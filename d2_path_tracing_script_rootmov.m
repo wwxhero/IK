@@ -145,7 +145,7 @@ for i = 1:n_targets
 end
 elapsedTime_1 = toc(start_1);
 
-animateFIK(robot, qs, targets, solInfo);
+%animateFIK(robot, qs, targets, solInfo);
 writematrix(qs, 'ik_solutions_rootmov.csv');
 writetable(struct2table(solInfo), 'ik_solutions_info_rootmov.txt');
 
@@ -154,7 +154,8 @@ ik_j = jacobianIK(robot);
 qs_j = zeros(n_targets, ndof);
 qInitial = q0;
 epsilon_d = 0.01; %1 centimeter
-epsilon_r = 0.087; %5 degree
+epsilon_rd = 3.4437; % in degree
+epsilon_r = (pi/180) * epsilon_rd;
 for i_target = 1 : n_targets
 	point = targets(i_target, :);
     z_prime = [0 0 1];
@@ -177,4 +178,12 @@ e_sol = qs - qs_j;
 fprintf('error:%f', max(max(e_sol, [], 1)));
 
 animateFIK(robot, qs_j, targets, solInfo_prime);
-% Copyright 2012 The MathWorks, Inc.
+epsilon_r_d = 1;
+epsilon_r_n = round(epsilon_r_d * epsilon_rd);
+epsilon_d_d = 100;
+epsilon_d_n = round(epsilon_d_d * epsilon_d);
+sol_file_name = sprintf('ik_solutions_j_epsilon=%d_%dx%d_%d', epsilon_r_n,  epsilon_r_d, epsilon_d_n, epsilon_d_d);
+solInfo_file_name = sprintf('ik_solutions_info_j_epsilon=%d_%dx%d_%d', epsilon_r_n,  epsilon_r_d, epsilon_d_n, epsilon_d_d);
+
+writematrix(qs_j, sol_file_name);
+writetable(struct2table(solInfo_prime), solInfo_file_name);

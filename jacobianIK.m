@@ -29,6 +29,7 @@ classdef(StrictDefaults) jacobianIK < matlab.System & ...
         function [theta, solutionInfo, Theta, Err] = stepImpl(obj, name_eef, tform_t, theta_0, epsilon_p, epsilon_r, N, lambd_sqr, weights)
             %stepImpl Solve IK
             d2r = pi/180;
+            r2d = 180/pi;
             max_delta_norm_theta = 20 * d2r;
             theta_k = theta_0;
             %weights = [0 0 0 1 1 1];
@@ -83,6 +84,7 @@ classdef(StrictDefaults) jacobianIK < matlab.System & ...
             solutionInfo.Iterations = n_it;
             solutionInfo.NumRandomRestarts = 0;
             solutionInfo.PoseErrorNorm = norm_e_p;
+            solutionInfo.OriErrorNorm = norm_e_r * r2d;
             solutionInfo.ExitFlag = 1;
             solutionInfo.Status = 'success';
             solutionInfo.theta = theta_0;

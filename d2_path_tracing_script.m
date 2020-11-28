@@ -149,10 +149,11 @@ fprintf('error:%f', max(max(e_sol, [], 1)));
 
 animateFIK(robot, qs_j, targets, solInfo_prime);
 
+epsilon_d_d = 100;
+epsilon_d_n = round(epsilon_d_d * epsilon_d);
+sol_file_name = sprintf('ik_solutions_j_epsilon=%d_%d', epsilon_d_n, epsilon_d_d);
+solInfo_file_name = sprintf('ik_solutions_info_j_epsilon=%d_%d', epsilon_d_n, epsilon_d_d);
 
-sol_file_name = sprintf('ik_solutions_j_epsilon=%d_10000', epsilon*10000);
-solInfo_file_name = sprintf('ik_solutions_info_j_epsilon=%d_10000', epsilon*10000);
-%writematrix(qs_j, 'ik_solutions_j.csv');
 writematrix(qs_j, sol_file_name);
 writetable(struct2table(solInfo_prime), solInfo_file_name);
 
