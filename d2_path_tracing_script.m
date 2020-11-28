@@ -181,10 +181,12 @@ for i_case = 1 : n_case
 	[~, sInfo, theta_k, ~, err_k] = ik_j(endEffector, trvec2tform(t), theta_0, epsilon_d, epsilon_r, 1000, lambda_sqr(1), weights);
 	[~, sInfo2, theta_k2, ~, err_k2] = ik_j(endEffector, trvec2tform(t), theta_0, epsilon_d, epsilon_r, 1000, lambda_sqr(2), weights);
 
-	Theta = theta_k(1:sInfo.Iterations, :);
-	Err = err_k(1:sInfo.Iterations);
-	Theta_prime = theta_k2(1:sInfo2.Iterations, :);
-	Err_prime = err_k2(1:sInfo2.Iterations);
+	n_theta = sInfo.Iterations+1;
+	Theta = theta_k(1:n_theta, :);
+	Err = err_k(1:n_theta);
+	n_theta_prime = sInfo2.Iterations+1;
+	Theta_prime = theta_k2(1:n_theta_prime, :);
+	Err_prime = err_k2(1:n_theta_prime);
 	plotIKAlgorPerf(Theta, Err, lambda_sqr(1) ...
 	 		, Theta_prime, Err_prime, lambda_sqr(2));
 end

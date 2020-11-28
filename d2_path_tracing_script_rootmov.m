@@ -124,24 +124,24 @@ qInitial = q0; % Use home configuration as the initial guess
 elapsedTime_0 = toc(start_0);
 start_1 = tic;
 for i = 1:n_targets
-    % Solve for the configuration satisfying the desired end effector
-    % position
+	% Solve for the configuration satisfying the desired end effector
+	% position
 	point = targets(i,:);
-    z_prime = [0 0 1];
-    x_prime = point - center;
-    x_prime = x_prime./norm(x_prime);
-    y_prime = cross(z_prime, x_prime);
-    ori_t = affine3d([x_prime(1), x_prime(2), x_prime(3), 0;...
-                    , y_prime(1), y_prime(2), y_prime(3), 0;...
-                    , z_prime(1), z_prime(2), z_prime(3), 0;...
-                    , point(1), point(2), point(3), 1]);
+	z_prime = [0 0 1];
+	x_prime = point - center;
+	x_prime = x_prime./norm(x_prime);
+	y_prime = cross(z_prime, x_prime);
+	ori_t = affine3d([x_prime(1), x_prime(2), x_prime(3), 0;...
+					, y_prime(1), y_prime(2), y_prime(3), 0;...
+					, z_prime(1), z_prime(2), z_prime(3), 0;...
+					, point(1), point(2), point(3), 1]);
 
-    endEffector_confs(:, :, i) = ori_t.T';
+	endEffector_confs(:, :, i) = ori_t.T';
 	[qSol, solInfo(i)] = ik(endEffector, endEffector_confs(:, :, i), weights, qInitial);
-    % Store the configuration
-    qs(i,:) = qSol;
-    % Start from prior solution
-    qInitial = qSol;
+	% Store the configuration
+	qs(i,:) = qSol;
+	% Start from prior solution
+	qInitial = qSol;
 end
 elapsedTime_1 = toc(start_1);
 
@@ -158,16 +158,16 @@ epsilon_rd = 3.4437; % in degree
 epsilon_r = (pi/180) * epsilon_rd;
 for i_target = 1 : n_targets
 	point = targets(i_target, :);
-    z_prime = [0 0 1];
-    x_prime = point - center;
-    x_prime = x_prime./norm(x_prime);
-    y_prime = cross(z_prime, x_prime);
-    ori_t = affine3d([x_prime(1), x_prime(2), x_prime(3), 0;...
-                    , y_prime(1), y_prime(2), y_prime(3), 0;...
-                    , z_prime(1), z_prime(2), z_prime(3), 0;...
-                    , point(1), point(2), point(3), 1]);
+	z_prime = [0 0 1];
+	x_prime = point - center;
+	x_prime = x_prime./norm(x_prime);
+	y_prime = cross(z_prime, x_prime);
+	ori_t = affine3d([x_prime(1), x_prime(2), x_prime(3), 0;...
+					, y_prime(1), y_prime(2), y_prime(3), 0;...
+					, z_prime(1), z_prime(2), z_prime(3), 0;...
+					, point(1), point(2), point(3), 1]);
 
-    endEffector_confs(:, :, i) = ori_t.T';
+	endEffector_confs(:, :, i) = ori_t.T';
 	[qSol, solInfo_prime(i_target), ~, ~] = ik_j(endEffector, endEffector_confs(:, :, i), qInitial, epsilon_d, epsilon_r, 500, 1, weights);
 	qs_j(i_target, :) = qSol;
 	qInitial = qSol;
@@ -187,3 +187,37 @@ solInfo_file_name = sprintf('ik_solutions_info_j_epsilon=%d_%dx%d_%d', epsilon_r
 
 writematrix(qs_j, sol_file_name);
 writetable(struct2table(solInfo_prime), solInfo_file_name);
+[~, n_theta] = size(qs_j);
+case_inspect.theta_0 = [0	0	0	0; ...
+						-0.148092149	0.08440374	0.05415156	0.028506282; ...
+						];
+case_inspect.targets = [0.45	0.1	0; ...
+						0.445287474	0.137303483	0; ...
+						];
+[n_case, ~] = size(case_inspect.theta_0);
+for i_case = 1 : n_case
+	point = case_inspect.targets(i_case, :);
+	z_prime = [0 0 1];
+	x_prime = point - center;
+	x_prime = x_prime./norm(x_prime);
+	y_prime = cross(z_prime, x_prime);
+	ori_t = affine3d([x_prime(1), x_prime(2), x_prime(3), 0;...
+					, y_prime(1), y_prime(2), y_prime(3), 0;...
+					, z_prime(1), z_prime(2), z_prime(3), 0;...
+					, point(1), point(2), point(3), 1]);
+	conf = ori_t.T';
+	theta_0 = case_inspect.theta_0(i_case, :)';
+	lambda_sqr = [1, 0.1];
+	[~, sInfo, theta, err_k_r, err_k_p] = ik_j(endEffector, conf, theta_0, epsilon_d, epsilon_r, 1000, lambda_sqr(1), weights);
+	[~, sInfo2, theta2, err_k2_r, err_k2_p] = ik_j(endEffector, conf, theta_0, epsilon_d, epsilon_r, 1000, lambda_sqr(2), weights);
+	n_theta = sInfo.Iterations+1; % theta(0) = theta_0
+	n_theta_prime = sInfo2.Iterations+1; %theta_prime(0) = theta_0
+    Theta = theta(1:n_theta, :);
+    Theta_prime = theta2(1:n_theta_prime, :);
+	Err_p = err_k_p(1:n_theta);
+	Err_p_prime = err_k2_p(1:n_theta_prime);
+	Err_r = err_k_r(1:n_theta);
+	Err_r_prime = err_k2_r(1:n_theta_prime);
+	plotIKOriAlgorPerf(Theta, Err_r, Err_p, lambda_sqr(1) ...
+			     , Theta_prime, Err_r_prime, Err_p_prime, lambda_sqr(2));
+end
