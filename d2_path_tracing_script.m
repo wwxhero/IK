@@ -187,6 +187,6 @@ for i_case = 1 : n_case
 	n_theta_prime = sInfo2.Iterations+1;
 	Theta_prime = theta_k2(1:n_theta_prime, :);
 	Err_prime = err_k2(1:n_theta_prime);
-	plotIKAlgorPerf(Theta, Err, lambda_sqr(1) ...
-	 		, Theta_prime, Err_prime, lambda_sqr(2));
+	plotIKAlgorPerf(Theta, Err, sprintf('\\lambda^2=%4.3f', lambda_sqr(1))...
+	 		, Theta_prime, Err_prime, sprintf('\\lambda^2=%4.3f', lambda_sqr(2)));
 end
