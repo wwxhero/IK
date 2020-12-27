@@ -130,32 +130,16 @@ end
 
 ik_j = jacobianIK(robot);
 qs_j = zeros(n_targets, ndof);
-qInitial = q0;
+
 
 epsilon_d = 0.01;
 %epsilon_r = 0.087; %5 degree
 epsilon_r = 2*pi;
 
-for i_target = 1 : n_targets
-	t = targets(i_target, :);
-	[qSol, solInfo_prime(i_target), ~, ~] = ik_j(endEffector, trvec2tform(t), qInitial, epsilon_d, epsilon_r, 500, 1, weights);
-	qs_j(i_target, :) = qSol;
-	qInitial = qSol;
-end
 
 e_sol = qs - qs_j;
-%assert(max(max(e_sol, [], 1)) < epsilon);
-fprintf('error:%f', max(max(e_sol, [], 1)));
 
 %animateFIK(robot, qs_j, targets, solInfo_prime);
-
-epsilon_d_d = 100;
-epsilon_d_n = round(epsilon_d_d * epsilon_d);
-sol_file_name = sprintf('ik_solutions_j_epsilon=%d_%d', epsilon_d_n, epsilon_d_d);
-solInfo_file_name = sprintf('ik_solutions_info_j_epsilon=%d_%d', epsilon_d_n, epsilon_d_d);
-
-writematrix(qs_j, sol_file_name);
-writetable(struct2table(solInfo_prime), solInfo_file_name);
 
 [~, n_theta] = size(qs_j);
 
@@ -191,20 +175,19 @@ for i_case = 1 : n_case
 	t = case_inspect.targets(i_case, :);
 	theta_0 = case_inspect.theta_0(i_case, :)';
 	lambda_sqr = case_inspect.lambda_sqr(i_case);
-	robot.Bodies{2}.Joint.PositionLimits = [-Inf, Inf];
-	robot.Bodies{2}.Joint.HomePosition = 0;
+	ik_j.bodyTree.Bodies{2}.Joint.PositionLimits = [-Inf, Inf];
+	ik_j.bodyTree.Bodies{2}.Joint.HomePosition = 0;
 	[~, sInfo, theta_k, ~, err_k] = ik_j(endEffector, trvec2tform(t), theta_0, epsilon_d, epsilon_r, 1000, lambda_sqr, weights);
-	robot.Bodies{2}.Joint.HomePosition = theta_0(2);
-	robot.Bodies{2}.Joint.PositionLimits = case_inspect.constraint(i_case, :);
+	ik_j.bodyTree.Bodies{2}.Joint.HomePosition = theta_0(2);
+	ik_j.bodyTree.Bodies{2}.Joint.PositionLimits = case_inspect.constraint(i_case, :);
 	[~, sInfo2, theta_k2, ~, err_k2] = ik_j(endEffector, trvec2tform(t), theta_0, epsilon_d, epsilon_r, 1000, lambda_sqr, weights);
-
 	n_theta = sInfo.Iterations+1;
 	Theta = theta_k(1:n_theta, :);
 	Err = err_k(1:n_theta);
 	n_theta_prime = sInfo2.Iterations+1;
 	Theta_prime = theta_k2(1:n_theta_prime, :);
 	Err_prime = err_k2(1:n_theta_prime);
-	theta_2_limits = robot.Bodies{2}.Joint.PositionLimits;
+	theta_2_limits = ik_j.bodyTree.Bodies{2}.Joint.PositionLimits;
     if (theta_2_limits(1) < Inf && theta_2_limits(1) > -Inf)
         c_theta_2 =  theta_2_limits(1);
     else

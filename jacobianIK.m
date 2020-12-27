@@ -53,6 +53,13 @@ classdef(StrictDefaults) jacobianIK < matlab.System & ...
             norm_e_r = norm(e(1:3));
             norm_e_p = norm(e(4:6));
             %fprintf('stepImpl: [%f %f %f]\n', e(4, 1), e(5, 1), e(6, 1));
+            Theta_l(1:n_theta, 1) = -pi;
+            Theta_h(1:n_theta, 1) = +pi;
+            for i_theta = 1:n_theta
+                bound = obj.bodyTree.Bodies{i_theta}.Joint.PositionLimits;
+                Theta_l(i_theta) = max(Theta_l(i_theta), bound(1));
+                Theta_h(i_theta) = min(Theta_h(i_theta), bound(2));
+            end
 
             %lambd_sqr ^ 6 == 0.0001 (epsilon for determinant)
             n_it = 0;
@@ -70,6 +77,7 @@ classdef(StrictDefaults) jacobianIK < matlab.System & ...
                 beta_theta = max_delta_norm_theta/(max(max_delta_norm_theta, max(abs(delta_theta))));
                 delta_theta = delta_theta * beta_theta;
                 theta_k = theta_k + delta_theta;
+                theta_k = max(Theta_l, min(Theta_h, theta_k));
                 sigmove = (beta_theta > 0.1);
                 tform_eef = getTransform(obj.bodyTree, theta_k, name_eef);
                 p_t(1:3) = tform_t(1:3, 4);
