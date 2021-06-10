@@ -24,6 +24,7 @@ function animateFIK(rigTree, theta, targets, solInfo)
 			savefig(filename);
 			i_pic = i_pic + 1;
 		end
-		waitfor(r);
+		% waitfor(r);
+		waitforbuttonpress;
 	end
 end
